@@ -4,251 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction Vouching Tool</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-        
-        body {
-            font-family: 'Orbitron', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-            color: #fff;
-            text-align: center;
-            padding: 2rem;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        h1, h2, h3, h4 {
-            color: #00d4ff;
-        }
-        input[type="file"], input[type="number"], button {
-            display: block;
-            margin: 1rem auto;
-            padding: 0.75rem;
-            width: 80%;
-            max-width: 300px;
-            border-radius: 12px;
-            border: none;
-            font-size: 1rem;
-        }
-        input[type="file"], input[type="number"] {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
-        button {
-            background: #00d4ff;
-            color: #1a1a2e;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background: #00a6d6;
-        }
-        .error, .success {
-            padding: 1rem;
-            border-radius: 12px;
-            margin: 1rem 0;
-        }
-        .error {
-            background: #ff4d4d;
-            color: #fff;
-        }
-        .success {
-            background: #28a745;
-            color: #fff;
-        }
-        #results {
-            margin-top: 2rem;
-        }
-        table {
-            width: 100%;
-            margin: 1rem 0;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #fff;
-        }
-    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h1>Transaction Vouching Tool</h1>
-        <div id="error" style="display: none;" class="error"></div>
-        <div id="success" style="display: none;" class="success"></div>
-        
-        <input type="file" accept=".csv" id="fileInput">
-        <div id="fileStatus"></div>
-        
-        <label for="amount">Target Amount ($)</label>
-        <input type="number" id="amount" step="0.01" value="215">
-        
-        <button onclick="processFile()" id="processButton">Find Matching Transactions</button>
-        
-        <div id="results"></div>
-        <div id="debug"></div>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Transaction Vouching Tool</h1>
+
+            <!-- Error Alert -->
+            <div id="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 hidden">
+                <span class="block sm:inline">Error message will appear here</span>
+            </div>
+
+            <!-- Success Alert -->
+            <div id="success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 hidden">
+                <span class="block sm:inline">Success message will appear here</span>
+            </div>
+
+            <!-- File Status -->
+            <div id="fileStatus" class="mb-6 text-gray-600">
+                <!-- File status will appear here -->
+            </div>
+
+            <!-- Amount Input -->
+            <div class="mb-6">
+                <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">Target Amount ($)</label>
+                <div class="mt-1 relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="text-gray-500 sm:text-sm">$</span>
+                    </div>
+                    <input type="number" name="amount" id="amount" 
+                           class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                           placeholder="0.00">
+                </div>
+            </div>
+
+            <!-- Search Button -->
+            <button class="w-full bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200">
+                Find Matching Transactions
+            </button>
+
+            <!-- Results Section -->
+            <div id="results" class="mt-8 space-y-4">
+                <!-- Results will appear here -->
+            </div>
+
+            <!-- Debug Section -->
+            <div id="debug" class="mt-8 p-4 bg-gray-100 rounded-md text-sm text-gray-600 hidden">
+                <!-- Debug information will appear here -->
+            </div>
+        </div>
     </div>
 
-    <script>
-        let parsedData = null;
-
-        function showError(message) {
-            const error = document.getElementById('error');
-            error.textContent = message;
-            error.style.display = 'block';
-            
-            const debug = document.getElementById('debug');
-            debug.style.display = 'block';
-            debug.textContent = 'Debug Info:\n' + message;
-        }
-
-        function showSuccess(message) {
-            const success = document.getElementById('success');
-            success.textContent = message;
-            success.style.display = 'block';
-        }
-
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('fileStatus').textContent = `Selected: ${file.name}`;
-                parseCSV(file);
-            }
-        });
-
-        function parseCSV(file) {
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    console.log('Parsed CSV:', results);
-                    document.getElementById('debug').textContent = 'CSV Headers: ' + JSON.stringify(results.meta.fields);
-                    
-                    if (results.errors.length > 0) {
-                        showError('CSV Parsing Errors: ' + JSON.stringify(results.errors));
-                        return;
-                    }
-
-                    if (!results.data.length) {
-                        showError('No data found in CSV');
-                        return;
-                    }
-
-                    const headers = results.meta.fields;
-                    if (!headers.includes('Amount')) {
-                        showError('CSV must contain an "Amount" column. Found columns: ' + headers.join(', '));
-                        return;
-                    }
-
-                    parsedData = results.data;
-                    showSuccess('File parsed successfully');
-                },
-                error: function(error) {
-                    showError('Error parsing CSV: ' + error.message);
-                }
-            });
-        }
-
-        function processFile() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            if (!parsedData) {
-                showError('Please upload a CSV file first');
-                return;
-            }
-
-            if (isNaN(amount) || amount <= 0) {
-                showError('Please enter a valid amount');
-                return;
-            }
-
-            try {
-                const transactions = parsedData.map(row => ({
-                    amount: parseFloat(String(row.Amount).replace(/[$,]/g, '')),
-                    description: row.Description || '',
-                    account: row.Account || '',
-                    transactionNumber: row['Transaction number'] || ''
-                })).filter(t => !isNaN(t.amount));
-
-                console.log('Processed transactions:', transactions);
-                
-                const results = findCombinations(transactions, amount);
-                displayResults(results, amount);
-
-            } catch (error) {
-                showError('Processing error: ' + error.message);
-            }
-        }
-
-        function findCombinations(transactions, targetAmount, maxDepth = 3) {
-            const results = [];
-            const tolerance = 0.01;
-
-            function isClose(a, b) {
-                return Math.abs(a - b) < tolerance;
-            }
-
-            function combine(start, depth, currentSum, combination) {
-                if (depth === 0 || start >= transactions.length) {
-                    if (isClose(currentSum, targetAmount)) {
-                        results.push([...combination]);
-                    }
-                    return;
-                }
-
-                for (let i = start; i < transactions.length; i++) {
-                    if (currentSum + transactions[i].amount <= targetAmount + tolerance) {
-                        combination.push(transactions[i]);
-                        combine(i + 1, depth - 1, currentSum + transactions[i].amount, combination);
-                        combination.pop();
-                    }
-                }
-            }
-
-            for (let depth = 1; depth <= maxDepth; depth++) {
-                combine(0, depth, 0, []);
-            }
-
-            return results;
-        }
-
-        function displayResults(combinations, targetAmount) {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-
-            if (combinations.length === 0) {
-                resultsDiv.innerHTML = '<p>No combinations found matching the target amount.</p>';
-                return;
-            }
-
-            let html = `<h3>Found ${combinations.length} combinations matching $${targetAmount.toFixed(2)}</h3>`;
-            
-            combinations.forEach((combo, index) => {
-                const total = combo.reduce((sum, t) => sum + t.amount, 0);
-                html += `<div style="margin: 1rem 0; padding: 1rem; background: rgba(255, 255, 255, 0.1); border-radius: 12px;">
-                    <h4>Combination ${index + 1}</h4>
-                    <table>
-                        <tr><th>Description</th><th>Amount</th></tr>`;
-                
-                combo.forEach(t => {
-                    html += `<tr>
-                        <td>${t.description || t.account || 'Transaction'}</td>
-                        <td>$${t.amount.toFixed(2)}</td>
-                    </tr>`;
-                });
-                
-                html += `<tr style="border-top: 1px solid #fff">
-                    <td><strong>Total</strong></td>
-                    <td><strong>$${total.toFixed(2)}</strong></td>
-                </tr></table></div>`;
-            });
-
-            resultsDiv.innerHTML = html;
-        }
-    </script>
+    <footer class="text-center text-gray-500 text-sm mt-8 pb-8">
+        © 2024 Transaction Vouching Tool. All rights reserved.
+    </footer>
 </body>
 </html>
